@@ -1,0 +1,339 @@
+
+1. VDD
+2. GND
+3. DATA
+4. CLOCK
+5. P-LED
+
+GPIO01 DATA
+GPIO02 CLOCK
+
+
+## TIME:
+00:00 01 0101 0000 0000 0000 0000 0000 0000 0000 - 0x50000000
+00:00 01 0101 0000 0000 0000 0000 0000 0001 0001 - 0x50000011
+00:00 01 0101 0000 0000 0000 0000 0000 0010 0010 - 0x50000022
+00:00 01 0101 0000 0000 0000 0000 0000 0100 0100 - 0x50000044
+00:00 01 0101 0000 0000 0000 0000 0000 0110 0110 - 0x50000066
+            5    0    6    0    e    0    0
+06:07 01 0101 0000 0110 0000 1110 0000 0000 1011
+06:08 01 0101 0000 0110 0000 0001 0000 0000 0111
+06:09 01 0101 0000 0110 0000 1001 0000 0000 1111
+17:31
+
+                 1    2    3    4              A
+12:34 01 0101 1000 0100 1100 0010 0000 0000 0101 - 0x584C2005
+
+
+            5    8    4    C    2              5
+      01 0101 1000 0100 1100 0010 0000 0000 0101
+            A    1    2    3    4              A
+
+                 1    8    3    6              2
+18:36 01 0101 1000 0001 1100 0110 0000 0000 0100 - 0x581C6004
+
+
+19:35 01 0101 1000 1001 1100 1010 0000 0000 0100 - 0x589CA004
+
+88:88 01 0101 0001 0001 0001 0001 0000 0000 0000 - 0x51111000
+
+
+18:37 01 0101 1000 0001 1100 1110 0000 0000 1100
+18:38 01 0101 1000 0001 1100 0001 0000 0000 0010
+19:23 01 0101 1000 1001 0100 1100 0000 0000 1111 - 0x5894C00F
+19:30 01 0101 1000 1001 1100 0000 0000 0000 1011
+19:50 01 0101 1000 1001 1010 0000 0000 0000 1111 - 0x589A000F
+12:12 01 0101 1000 0100 1000 0100 0000 0000 0110 - 0x58484006
+12:15 01 0101 1000 0100 1000 1010 0000 0000 1001 - 0x5848A009
+
+s.write(0x50000000,32) #00:00
+s.write(0x50000011,32) #00:00
+s.write(0x50000022,32) #00:00
+s.write(0x50000044,32) #00:00
+s.write(0x50000066,32) #00:00
+
+s.write(0x58484006,32) #12:12
+s.write(0x5848A009,32) #12:15 24.1
+s.write(0x584C2005,32) #12:34
+s.write(0x581C6004,32) #18:36
+s.write(0x5894C00F,32) #19:23
+s.write(0x519CA004,32) #19:35
+s.write(0x589A000F,32) #19:50
+
+s.write(0x51111000,32) #88:88
+
+# TEMP:
+79.1F 01 1101 0101 0101 1110 1001 1000 1010
+
+22.4C 01 1101 1110 0101 0100 0100 0010 1110 - 0xDA5442E
+22.7C 01 1101 1010 0101 0100 0100 1110 0101 - 0xDA544E5
+22.8C 01 1101 1010 0101 0100 0100 0001 1101 - 0xDA5441D
+24.3C 01 1101 1010 0101 0100 0010 1100 0001 - 0xDA542C1
+24.9C 01 1101 1010 0101 0100 0010 1001 0111 - 0xDA54297
+24.6C 01 1101 1010 0101 0100 0010 0110 1101 - 0xDA5426D
+26.2C 01 1101 1010 0101 0100 0110 0100 1001 - 0xDA54649
+
+12:12 01 1101101001010100001000001010
+
+24.1C 01 1101 1010 0101 0100 0010 1000 0110 - 0xDA54286
+
+s.write(0xDA54297,28) #24.9C
+
+H24  01 0011 0000 1111 - 0x30F
+H12  01 0011 0100 1011 - 0x34B
+FLIP 01 0011 0010 1101 - 0x32D
+TEMP 01 0011 0001 1110 - 0x31E
+
+s.write(0x32D,12) #FLIP
+s.write(0x31E,12) #TEMP
+s.write(0x34B,12) #H12
+s.write(0x30F,12) #H24
+
+#
+
+# flip
+s.start()
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.stop()
+
+# temp
+s.start()
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.stop()
+
+# h12
+s.start()
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.stop()
+
+# h24
+s.start()
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.stop()
+
+# 18:36 A:
+s.start()
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.stop()
+
+#18:36 B
+s.start()
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.stop()
+
+
+# 18:36 A:
+s.start()
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.stop()
+
+#18:38 A:
+s.start()
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.stop()
+
+#19:50
+s.start()
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(0)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.write_bit(1)
+s.stop()
+
+
+string.hex((0x1 + 0x9 + 0x3 + 0x5) & 0xf)
+
+
+gpio.pin_mode(26, gpio.DAC)   # sets GPIO25 to a DAC pin
+gpio.dac_voltage(26, 5000)    # set voltage to 1250mV
+1255
