@@ -1,8 +1,10 @@
 import ULP
 import string
 
-class SerialLCD
+class ProjLCDClock
   def init()
+    gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
+    gpio.dac_voltage(25, 1250)    # set voltage to 1250mV
     ULP.wake_period(0,20000) # update
     ULP.gpio_init(32, 1) # data
     ULP.gpio_init(33, 1) #clock
@@ -11,6 +13,15 @@ class SerialLCD
     var c = bytes().fromb64("dWxwAAwA9AAAAAAAGAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAEACAcgEAANDlryxySABAgCcFzBkDBdwbAwVYGwAB3BsAAVgbEACAcuGvjHIBAABoMgCAcggAANABAAWCAABLggEAgHIJAABoIgCAcgkAANAAAdwbAAVYG3EQAEAABdwbAAFYGxchAEAABdwbAAVYG3EQAEAAAVgbBgBAcKAAQIAABdwbqAAAgAAB3BuoAACAAAFYG3EQAEAABVgbcRAAQAABWBsQAMByAQAZg1IAgHIIAADQAQAFggAADYIBAIByCQAAaEIAgHIJAADQkAAAgAAB3BsAAVgbAAAAsA==")
     ULP.load(c)
     ULP.run()
+    tasmota.add_driver(self)
+  end
+
+  def deinit()
+    self.del()
+  end
+
+  def del()
+    tasmota.remove_driver(self)
   end
 
   def h24()
@@ -100,13 +111,18 @@ class SerialLCD
     var rtc = tasmota.rtc()['local']
     var now = tasmota.time_dump(rtc)
     if now
-      self.set_time(now['hour'], now['min'], now['sec'])
+      var h = now['hour']
+      var m = now['min']
+      var s = now['sec']
+      if (s % 15) == 0
+        self.set_time(h,m,s)
+      end
     end
   end
 
 end
 
-# return SerialLCD
+return ProjLCDClock
 
-#s.del()
-s = SerialLCD()
+# s.del()
+# s = ProjLCDClock()
