@@ -1,5 +1,5 @@
 """
-LED-Example with exporting ULP code to Tasmotas Berry implementation
+Projecting LCD clock serial interface with exporting ULP code to Tasmotas Berry
 """
 from esp32_ulp import src_to_binary
 import ubinascii

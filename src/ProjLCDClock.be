@@ -48,24 +48,15 @@ class ProjLCDClock
     return ((n & 1) << 3) | ((n & 2) << 1) | ((n & 4) >> 1) | ((n & 8) >> 3) & 0xF;
   end
 
-  def swap_nibbles(data, nibbles)
-    var res = 0
-    for i:0..nibbles-1
-      res += self.swap_nibble((data >> i * 4) & 0xF) << i * 4
-    end
-    return res
-  end
-
-  def send(data, nibbles)
-    var sw_data = self.swap_nibbles(data, nibbles)
-    var dh = sw_data >> 16 & 0xFFFF
-    var dl = sw_data & 0xFFFF
+  def send(data, bits)
+    var dh = data >> 16 & 0xFFFF
+    var dl = data & 0xFFFF
     var mh,ml
-    if nibbles > 4 # > 2 byte
-      mh = 1 << (((nibbles - 4) * 4) - 1)
+    if bits > 16 # >2 bytes
+      mh = 1 << (bits - 17)
       ml = 0x8000
     else
-      mh = 1 << ((nibbles * 4) - 1)
+      mh = 1 << (bits - 1)
       dh = dl
       ml = 0
       dl = 0
@@ -74,25 +65,22 @@ class ProjLCDClock
     ULP.set_mem(4,dl) # data_lo
     ULP.set_mem(3,mh) # mask_hi
     ULP.set_mem(2,dh) # data_hi (start transmittion)
-    # print(f"{self.hour}:{self.min}:{self.sec} {string.hex(data)} -> {string.hex(sw_data)} : {string.hex(dh)}:{string.hex(mh)} {string.hex(dl)}:{string.hex(ml)}")
+    # print(f"{self.hour}:{self.min}:{self.sec} {string.hex(data)} -> {string.hex(dh)}:{string.hex(mh)} {string.hex(dl)}:{string.hex(ml)}")
   end
 
-  def send_cmd(c, data)
+  def send_cmd(cmd, data)
     if type(data) == 'int'
       var cs = (data & 0xF) ^ 0xF
-      self.send((c<<8) + (data<<4) + cs, 3)
+      self.send((self.swap_nibble(cmd)<<8) + (self.swap_nibble(data)<<4) + self.swap_nibble(cs), 12)
       return
     end
-    var nibbles = size(data)
-    var payload = 0
+    var payload = self.swap_nibble(cmd)
     var cs = 0
-    var shift = 4
     for n: data
-      payload += (n & 0xF) << (nibbles * 4 - shift)
+      payload = (payload << 4) + self.swap_nibble(n)
       cs += n & 0xF
-      shift += 4
     end
-    self.send(((c & 0xf) << (nibbles * 4 + 4)) + (payload << 4) + (cs & 0xF), nibbles + 2)
+    self.send((payload << 4) + self.swap_nibble(cs & 0xF), size(data)*4 + 8)
   end
 
   def set_time(h, m, s)
