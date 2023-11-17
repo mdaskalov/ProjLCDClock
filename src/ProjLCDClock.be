@@ -152,33 +152,35 @@ class ProjLCDClock
       self.sec = now['sec']
       if (self.sec == 5) || (self.sec == 25) || (self.sec == 45)
         self.set_time(self.hour,self.min,self.sec)
-      elif (self.sec == 5) || (self.sec == 25) || (self.sec == 45)
-        if self.showTemp == 1
+      elif self.showTemp == 1
+        if (self.sec % 4) == 0
           self.temp()
-          self.showTemp = 0
+        elif ((self.sec + 2) % 4) == 0
+          self.set_temp(self.tempMode == 0 ? self.outTemp : self.inTemp)
+          self.tempMode ^= 1
         end
-      elif (self.sec % 10) == 0
-        self.set_temp(self.tempMode == 0 ? self.outTemp : self.inTemp)
-        self.tempMode ^= 1
       end
     end
   end
 
   def web_add_main_button()
+    webserver.content_send("<p></p><button onclick='la(\"&showTemp=1\");'>Toggle showTemp</button>")
     webserver.content_send("<p></p><button onclick='la(\"&flip=1\");'>Flip</button>")
-    webserver.content_send("<p></p><button onclick='la(\"&24h=1\");'>24H</button>")
+    webserver.content_send("<p></p><button onclick='la(\"&24h=1\");'>12H / 24H</button>")
     webserver.content_send("<p></p><button onclick='la(\"&temp=1\");'>Temp</button>")
     webserver.content_send("<p></p><button onclick='la(\"&set=1\");'>Set Time</button>")
   end
 
   def web_sensor()
-    if webserver.has_arg("flip")
+    if webserver.has_arg("showTemp")
+      self.showTemp ^= 1
+    elif webserver.has_arg("flip")
       self.flip()
-    elif webserver.has_arg("temp")
-      self.showTemp = 1
     elif webserver.has_arg("24h")
       self.mode ^= 1
       if self.mode == 0 self.set_24h() else self.set_12h() end
+    elif webserver.has_arg("temp")
+      self.temp()
     elif webserver.has_arg("set")
       var rtc = tasmota.rtc()['local']
       var now = tasmota.time_dump(rtc)
