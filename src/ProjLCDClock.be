@@ -29,7 +29,7 @@ class ProjLCDClock
     ULP.load(c)
     ULP.run()
 
-    self.h24()
+    self.set_24h()
 
     mqtt.subscribe('nodered/message', /topic, idx, msg -> self.set_message(msg))
     tasmota.add_driver(self)
@@ -114,11 +114,11 @@ class ProjLCDClock
     self.send_cmd(0xB, [s1, s2, t1, t2, t3])
   end
 
-  def h24()
+  def set_24h()
     self.send_cmd(0xc, 0)
   end
 
-  def h12()
+  def set_12h()
     self.send_cmd(0xc, 2)
   end
 
@@ -178,7 +178,7 @@ class ProjLCDClock
       self.showTemp = 1
     elif webserver.has_arg("24h")
       self.mode ^= 1
-      if self.mode == 0 self.h24() else self.h12() end
+      if self.mode == 0 self.set_24h() else self.set_12h() end
     elif webserver.has_arg("set")
       var rtc = tasmota.rtc()['local']
       var now = tasmota.time_dump(rtc)
