@@ -1,5 +1,6 @@
 import ULP
 import mqtt
+import math
 import string
 import webserver
 
@@ -97,9 +98,18 @@ class ProjLCDClock
   def set_temp(t, farenheit)
     var s1 = farenheit == true ? 0xA : 0x5
     var s2 = 0xA # unknown
-    var t1 = int(t) / 10
-    var t2 = int(t) % 10
-    var t3 = int(t * 10) % 10
+    var t1 = int(math.abs(t)) / 10
+    var t2 = int(math.abs(t)) % 10
+    var t3 = int(math.abs(t * 10)) % 10
+    if t <= -10
+      t1 = 0xC # LL
+    elif t >= 70
+      t1 = 0xB # HH
+    elif t < 0
+      t1 = 0xD # -
+    elif t1 == 0
+      t1 = 0xA # SP
+    end
     self.send_cmd(0xB, [s1, s2, t1, t2, t3])
   end
 
