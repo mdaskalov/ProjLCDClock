@@ -8,7 +8,7 @@ class ProjLCDClock
   var hour,min,sec
   var inTemp,outTemp,tempMode
   var showTemp
-  var mode
+  var mode_12h
 
   def init()
     self.hour = 0
@@ -18,7 +18,7 @@ class ProjLCDClock
     self.outTemp = 11
     self.tempMode = 0
     self.showTemp = 0
-    self.mode = 0
+    self.mode_12h = 0
 
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
@@ -85,7 +85,7 @@ class ProjLCDClock
   end
 
   def set_time(h, m, s)
-    var h1 = h / 10
+    var h1 = h / 10 + (self.mode_12h ? 8 : 0)
     var h2 = h % 10
     var m1 = m / 10
     var m2 = m % 10
@@ -166,8 +166,8 @@ class ProjLCDClock
     elif webserver.has_arg("flip")
       self.flip()
     elif webserver.has_arg("24h")
-      self.mode ^= 1
-      if self.mode == 0 self.set_24h() else self.set_12h() end
+      self.mode_12h ^= 1
+      if self.mode_12h == 0 self.set_24h() else self.set_12h() end
     elif webserver.has_arg("temp")
       self.temp()
     elif webserver.has_arg("set")
