@@ -126,7 +126,7 @@ class ProjLCDClock
   end
 
   def temp()
-    self.send_cmd(0xc, 8)
+    self.send_cmd(0xc, 8 + self.mode_12h ? 2 : 0)
   end
 
   def set_message(txt)
