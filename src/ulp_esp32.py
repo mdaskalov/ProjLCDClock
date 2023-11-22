@@ -86,17 +86,18 @@ submit:
   ld r1, r2, 0
 
 start:
+  # 1µs approx 8,687755102 cycles
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + led, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 0)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 1)
-  wait 4209
+  wait 4220 # 488µs
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
-  wait 8471
-  WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 1)
+  wait 8471 # 2*488µs = 976µs
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 1)
-  wait 4209
+  wait 4230 # 488µs
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
+  wait 7 # compensate
 data:
   and r2, r1, r0
   jump off, eq
@@ -108,9 +109,9 @@ off:
   jump clock_toggle
 clock_toggle:
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
-  wait 4209
+  wait 4185 # 488µs
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 1)
-  wait 4209
+  wait 4230 # 488µs
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
   rsh r0, r0, 1
   jumpr data, 0, GT
@@ -149,8 +150,12 @@ print("ULP.wake_period(0,20000)") # update
 print("ULP.gpio_init(2, 1)")
 print("ULP.gpio_init(32, 1)")
 print("ULP.gpio_init(33, 1)")
-print("ULP.set_mem(2, 0x30F)")
-print("ULP.set_mem(3, 0x800)")
 print("var c = bytes().fromb64(\""+code_b64+"\")")
 print("ULP.load(c)")
 print("ULP.run()")
+print("tasmota.delay(10)")
+#0:0:0 584C2005 -> 584C:8000 2005:8000  (2:3 4:5)
+print("ULP.set_mem(5,0x8000)") # mask_lo
+print("ULP.set_mem(4,0x2005)") # data_lo
+print("ULP.set_mem(3,0x8000)") # mask_hi
+print("ULP.set_mem(2,0x584C)") # data_hi (start transmittion 12:34)
