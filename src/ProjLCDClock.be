@@ -23,6 +23,7 @@ class ProjLCDClock
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
     ULP.wake_period(0,20000) # update
+    ULP.gpio_init(2, 1) # led
     ULP.gpio_init(32, 1) # data
     ULP.gpio_init(33, 1) #clock
     var c = bytes().fromb64("dWxwAAwA9AAAAAAAGAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAEACAcgEAANDlryxySABAgCcFzBkDBdwbAwVYGwAB3BsAAVgbEACAcuGvjHIBAABoMgCAcggAANABAAWCAABLggEAgHIJAABoIgCAcgkAANAAAdwbAAVYG3EQAEAABdwbAAFYGxchAEAABdwbAAVYG3EQAEAAAVgbBgBAcKAAQIAABdwbqAAAgAAB3BuoAACAAAFYG3EQAEAABVgbcRAAQAABWBsQAMByAQAZg1IAgHIIAADQAQAFggAADYIBAIByCQAAaEIAgHIJAADQkAAAgAAB3BsAAVgbAAAAsA==")
