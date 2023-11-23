@@ -195,6 +195,7 @@ class ProjLCDClock
     webserver.content_send(string.format("{s}inTemp{m}%0.1f{e}",self.inTemp))
     webserver.content_send(string.format("{s}outTemp{m}%0.1f{e}",self.outTemp))
     webserver.content_send(string.format("{s}ShowTemp{m}%s{e}",self.showTemp == 1 ? "On":"Off"))
+    webserver.content_send(string.format("{s}12h mode{m}%s{e}",self.mode_12h == 1 ? "On":"Off"))
   end
 
 end
