@@ -3,6 +3,7 @@ import mqtt
 import math
 import string
 import webserver
+import persist
 
 class ProjLCDClock
 
@@ -18,8 +19,8 @@ class ProjLCDClock
     self.inTemp = 22
     self.outTemp = 11
     self.tempMode = 0
-    self.showTemp = 0
-    self.mode_12h = 0
+    self.showTemp = persist.find('clock_show_temp',0)
+    self.mode_12h = persist.find('clock_12h_mode',0)
 
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
@@ -164,8 +165,8 @@ class ProjLCDClock
 
   def web_add_main_button()
     webserver.content_send("<p></p><button onclick='la(\"&showTemp=1\");'>Toggle showTemp</button>")
-    webserver.content_send("<p></p><button onclick='la(\"&flip=1\");'>Flip</button>")
     webserver.content_send("<p></p><button onclick='la(\"&24h=1\");'>12H / 24H</button>")
+    webserver.content_send("<p></p><button onclick='la(\"&flip=1\");'>Flip</button>")
     webserver.content_send("<p></p><button onclick='la(\"&temp=1\");'>Temp</button>")
     webserver.content_send("<p></p><button onclick='la(\"&set=1\");'>Set Time</button>")
   end
@@ -173,11 +174,15 @@ class ProjLCDClock
   def web_sensor()
     if webserver.has_arg("showTemp")
       self.showTemp ^= 1
-    elif webserver.has_arg("flip")
-      self.flip()
+      persist.clock_show_temp = self.showTemp
+      persist.save()
     elif webserver.has_arg("24h")
       self.mode_12h ^= 1
+      persist.clock_12h_mode = self.mode_12h
+      persist.save()
       if self.mode_12h == 0 self.set_24h() else self.set_12h() end
+    elif webserver.has_arg("flip")
+      self.flip()
     elif webserver.has_arg("temp")
       self.temp()
     elif webserver.has_arg("set")
