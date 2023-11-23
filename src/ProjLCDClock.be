@@ -187,6 +187,9 @@ class ProjLCDClock
         self.set_time(now['hour'],now['min'],now['sec'])
       end
     end
+    webserver.content_send(string.format("{s}inTemp{m}%0.1f{e}",self.inTemp))
+    webserver.content_send(string.format("{s}outTemp{m}%0.1f{e}",self.outTemp))
+    webserver.content_send(string.format("{s}ShowTemp{m}%s{e}",self.showTemp == 1 ? "On":"Off"))
   end
 
 end
