@@ -20,10 +20,12 @@ source = """\
 
 # constants from:
 # https://github.com/espressif/esp-idf/blob/v5.0.2/components/soc/esp32/include/soc/rtc_io_channel.h
+#define RTCIO_GPIO2_CHANNEL           12
 #define RTCIO_GPIO32_CHANNEL          9
 #define RTCIO_GPIO33_CHANNEL          8
 
 # When accessed from the RTC module (ULP) GPIOs need to be addressed by their channel number
+.set led, RTCIO_GPIO2_CHANNEL
 .set dat, RTCIO_GPIO32_CHANNEL
 .set clk, RTCIO_GPIO33_CHANNEL
 
@@ -53,10 +55,12 @@ init:
   WRITE_RTC_REG(RTC_IO_TOUCH_PAD2_REG, RTC_IO_TOUCH_PAD2_MUX_SEL_M, 1, 1);
 
   # GPIO shall be output, not input (this also enables a pull-down by default)
+  WRITE_RTC_REG(RTC_GPIO_ENABLE_REG, RTC_GPIO_ENABLE_S + led, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_ENABLE_REG, RTC_GPIO_ENABLE_S + dat, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_ENABLE_REG, RTC_GPIO_ENABLE_S + clk, 1, 1)
 
   # reset both GPIOs
+  WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + led, 1, 0)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 0)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
 
@@ -83,6 +87,7 @@ submit:
 
 start:
   # 1µs approx 8,687755102 cycles
+  WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + led, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 0)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 1)
   wait 4220 # 488µs
@@ -130,6 +135,7 @@ clock_toggle:
 stop:
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + dat, 1, 0)
   WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + clk, 1, 0)
+  WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + led, 1, 0)
   halt  # go back to sleep until next wakeup period
 """
 binary = src_to_binary(source, cpu="esp32")
