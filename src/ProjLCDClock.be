@@ -32,7 +32,7 @@ class ProjLCDClock
     ULP.load(c)
     ULP.run()
 
-    self.set_24h()
+    if self.mode_12h == 0 self.set_24h() else self.set_12h() end
 
     mqtt.subscribe('nodered/message', /topic, idx, msg -> self.set_message(msg))
     tasmota.add_driver(self)
