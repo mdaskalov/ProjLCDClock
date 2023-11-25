@@ -7,20 +7,20 @@ import persist
 
 class ProjLCDClock
 
-  var hour,min,sec
-  var inTemp,outTemp,tempMode
-  var showTemp
+  var hour,min,sec,temp,tempFarenheit
   var mode_12h
+  var topic
+  var message
+  var showTemp
 
   def init()
     self.hour = 0
     self.min = 0
     self.sec = 0
-    self.inTemp = 22
-    self.outTemp = 11
-    self.tempMode = 0
-    self.showTemp = persist.find('clock_show_temp',0)
-    self.mode_12h = persist.find('clock_12h_mode',0)
+    self.temp = 11
+    self.tempFarenheit = false
+    self.topic = persist.find("clock_message_topic")
+    self.mode_12h = persist.find("clock_12h_mode",false)
 
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
@@ -32,9 +32,10 @@ class ProjLCDClock
     ULP.load(c)
     ULP.run()
 
-    if self.mode_12h == 0 self.set_24h() else self.set_12h() end
-
-    mqtt.subscribe('nodered/message', /topic, idx, msg -> self.set_message(msg))
+    if self.mode_12h self.set_12h() else self.set_24h() end
+    if self.topic
+      mqtt.subscribe(self.topic, def(topic, idx, msg) self.message = msg end)
+    end
     tasmota.add_driver(self)
   end
 
@@ -44,7 +45,9 @@ class ProjLCDClock
 
   def del()
     tasmota.remove_driver(self)
-    mqtt.unsubscribe('nodered/message');
+    if self.topic
+      mqtt.unsubscribe(self.topic);
+    end
   end
 
   def swap_nibble(n)
@@ -133,77 +136,74 @@ class ProjLCDClock
     self.send_cmd(0xc, 8 + (self.tempFarenheit ? 1 : 0))
   end
 
-  def set_message(txt)
-    var lines = string.split(txt,'\n');
-    if size(lines) > 1
-      var l1 = lines[0]
-      var sub = string.split(lines[1],'°')
-      if l1 == "In:"
-        self.inTemp = number(sub[0])
-      elif l1 == "Out:"
-        self.outTemp = number(sub[0])
-      end
+  def show(msg)
+    if msg == "FLIP"
+      self.flip()
+    elif msg == "TOGGLE TEMP"
+      self.toggle_temp()
+    elif string.find(msg,"TEMP ") == 0
+      var temp = string.split(msg,5)[1]
+      self.tempFarenheit = (string.find(temp, "F") > 0)
+      self.temp = number(string.replace(temp, self.tempFarenheit ? "F" : "C", ""))
+      self.set_temp(self.temp, self.tempFarenheit)
+      tasmota.set_timer(100, /-> self.toggle_temp())
+      self.showTemp = 6 # show for 6 seconds
     end
   end
 
   def every_second()
-    var rtc = tasmota.rtc()['local']
+    var rtc = tasmota.rtc()["local"]
     var now = tasmota.time_dump(rtc)
-    if now['year'] != 1970
-      self.hour = now['hour']
-      self.min = now['min']
-      self.sec = now['sec']
-      if (self.sec == 5) || (self.sec == 25) || (self.sec == 45)
-        self.set_time(self.hour,self.min,self.sec)
-      elif self.showTemp == 1
-        if (self.sec % 4) == 0
-          self.temp()
-        elif ((self.sec + 2) % 4) == 0
-          self.set_temp(self.tempMode == 0 ? self.outTemp : self.inTemp)
-          self.tempMode ^= 1
+    if now["year"] != 1970
+      self.hour = now["hour"]
+      self.min = now["min"]
+      self.sec = now["sec"]
+      if self.showTemp
+        self.showTemp -= 1
+        if self.showTemp == 0
+          self.toggle_temp()
+          self.showTemp = nil
         end
+      elif self.message
+        self.show(self.message)
+        self.message = nil
+      elif self.sec == 0
+        self.set_time(self.hour,self.min,self.sec)
       end
     end
   end
 
   def web_add_main_button()
-    webserver.content_send("<p></p><button onclick='la(\"&showTemp=1\");'>Toggle showTemp</button>")
     webserver.content_send("<p></p><button onclick='la(\"&24h=1\");'>12H / 24H</button>")
     webserver.content_send("<p></p><button onclick='la(\"&flip=1\");'>Flip</button>")
-    webserver.content_send("<p></p><button onclick='la(\"&temp=1\");'>Temp</button>")
+    webserver.content_send("<p></p><button onclick='la(\"&temp=1\");'>Toggle temp</button>")
     webserver.content_send("<p></p><button onclick='la(\"&set=1\");'>Set Time</button>")
   end
 
   def web_sensor()
-    if webserver.has_arg("showTemp")
-      self.showTemp ^= 1
-      persist.clock_show_temp = self.showTemp
-      persist.save()
-    elif webserver.has_arg("24h")
-      self.mode_12h ^= 1
+    if webserver.has_arg("24h")
+      self.mode_12h = !self.mode_12h
       persist.clock_12h_mode = self.mode_12h
       persist.save()
-      if self.mode_12h == 0 self.set_24h() else self.set_12h() end
+      if self.mode_12h self.set_12h() else self.set_24h() end
     elif webserver.has_arg("flip")
       self.flip()
     elif webserver.has_arg("temp")
-      self.temp()
+      self.toggle_temp()
     elif webserver.has_arg("set")
-      var rtc = tasmota.rtc()['local']
+      var rtc = tasmota.rtc()["local"]
       var now = tasmota.time_dump(rtc)
-      if now['year'] != 1970
-        self.set_time(now['hour'],now['min'],now['sec'])
+      if now["year"] != 1970
+        self.set_time(now["hour"],now["min"],now["sec"])
       end
     end
-    webserver.content_send(string.format("{s}inTemp{m}%0.1f{e}",self.inTemp))
-    webserver.content_send(string.format("{s}outTemp{m}%0.1f{e}",self.outTemp))
-    webserver.content_send(string.format("{s}ShowTemp{m}%s{e}",self.showTemp == 1 ? "On":"Off"))
-    webserver.content_send(string.format("{s}12h mode{m}%s{e}",self.mode_12h == 1 ? "On":"Off"))
+    webserver.content_send(string.format("{s}Temp{m}%0.1f°%s{e}",self.temp,self.tempFarenheit ? "F" : "C"))
+    webserver.content_send(string.format("{s}12h mode{m}%s{e}",self.mode_12h ? "On":"Off"))
   end
 
 end
 
-return ProjLCDClock
+# return ProjLCDClock
 
 # clk.del()
-# clk = ProjLCDClock()
+clk = ProjLCDClock()
