@@ -129,8 +129,8 @@ class ProjLCDClock
     self.send_cmd(0xc, 4)
   end
 
-  def temp()
-    self.send_cmd(0xc, 8)
+  def toggle_temp()
+    self.send_cmd(0xc, 8 + (self.tempFarenheit ? 1 : 0))
   end
 
   def set_message(txt)
