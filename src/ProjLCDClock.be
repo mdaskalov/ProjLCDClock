@@ -97,21 +97,24 @@ class ProjLCDClock
   end
 
   def set_temp(t, farenheit)
-    var s1 = farenheit == true ? 0xA : 0x5
-    var s2 = 0xA # unknown
-    var t1 = int(math.abs(t)) / 10
-    var t2 = int(math.abs(t)) % 10
-    var t3 = int(math.abs(t * 10)) % 10
-    if t <= -10
-      t1 = 0xC # LL
-    elif t >= 70
-      t1 = 0xB # HH
-    elif t < 0
-      t1 = 0xD # -
-    elif t1 == 0
+    var cf = farenheit ? 0xA : 0x5
+    var t1 = int(math.abs(t) / 100) % 10
+    var t2 = int(math.abs(t) / 10) % 10
+    var t3 = int(math.abs(t) / 1) % 10
+    var t4 = int(math.abs(t) * 10) % 10
+    if t1 != 1 || !farenheit
       t1 = 0xA # SP
     end
-    self.send_cmd(0xB, [s1, s2, t1, t2, t3])
+    if t < (farenheit ? 0 : -9.9)
+      t2 = 0xC # LL
+    elif t >= (farenheit ? 200 : 70)
+      t2 = 0xB # HH
+    elif t < 0
+      t2 = 0xD # -
+    elif t2 == 0
+      t2 = farenheit && t < 10 ? 0 : 0xA # SP
+    end
+    self.send_cmd(0xB, [cf, t1, t2, t3, t4])
   end
 
   def set_24h()
