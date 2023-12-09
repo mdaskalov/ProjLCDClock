@@ -12,6 +12,7 @@ class ProjLCDClock
   var topic
   var message
   var showTemp
+  var alert
 
   def init()
     self.hour = 0
@@ -22,6 +23,7 @@ class ProjLCDClock
     self.topic = persist.find("clock_message_topic")
     self.mode_12h = persist.find("clock_12h_mode",false)
 
+    gpio.pin_mode(2, gpio.OUTPUT)
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
     ULP.wake_period(0,20000) # update
@@ -141,13 +143,16 @@ class ProjLCDClock
       self.flip()
     elif msg == "TOGGLE TEMP"
       self.toggle_temp()
-    elif string.find(msg,"TEMP ") == 0
-      var temp = string.split(msg,5)[1]
+    elif string.find(msg, "TEMP ") == 0
+      var temp = string.split(msg, 5)[1]
       self.tempFarenheit = (string.find(temp, "F") > 0)
       self.temp = number(string.replace(temp, self.tempFarenheit ? "F" : "C", ""))
       self.set_temp(self.temp, self.tempFarenheit)
       tasmota.set_timer(100, /-> self.toggle_temp())
       self.showTemp = 6 # show for 6 seconds
+    elif string.find(msg, "ALERT ") == 0
+      var arg = string.split(msg, 6)[1]
+      self.alert = (arg == "true" || arg == "TRUE")
     end
   end
 
@@ -169,6 +174,11 @@ class ProjLCDClock
         self.message = nil
       elif self.sec == 0
         self.set_time(self.hour,self.min,self.sec)
+      end
+      if self.alert
+        gpio.digital_write(2, self.sec % 2 ? gpio.HIGH : gpio.LOW)
+      else
+        gpio.digital_write(2, gpio.LOW)
       end
     end
   end
@@ -197,6 +207,7 @@ class ProjLCDClock
         self.set_time(now["hour"],now["min"],now["sec"])
       end
     end
+    webserver.content_send(string.format("{s}Alert{m}%s{e}",self.alert ? "true":"false"))
     webserver.content_send(string.format("{s}Temp{m}%0.1f°%s{e}",self.temp,self.tempFarenheit ? "F" : "C"))
     webserver.content_send(string.format("{s}12h mode{m}%s{e}",self.mode_12h ? "On":"Off"))
   end
