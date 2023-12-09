@@ -49,9 +49,6 @@ entry:
   jump submit, eq  # jump if magic == token (note: "eq" means the last instruction (sub) resulted in 0)
 
 init:
-  # connect GPIO to ULP (0: GPIO connected to digital GPIO module, 1: GPIO connected to analog RTC module)
-  WRITE_RTC_REG(RTC_IO_TOUCH_PAD2_REG, RTC_IO_TOUCH_PAD2_MUX_SEL_M, 1, 1);
-
   # GPIO shall be output, not input (this also enables a pull-down by default)
   WRITE_RTC_REG(RTC_GPIO_ENABLE_REG, RTC_GPIO_ENABLE_S + dat, 1, 1)
   WRITE_RTC_REG(RTC_GPIO_ENABLE_REG, RTC_GPIO_ENABLE_S + clk, 1, 1)
@@ -141,7 +138,6 @@ print("")
 print("#You can paste the following snippet into Tasmotas Berry console:")
 print("import ULP")
 print("ULP.wake_period(0,20000)") # update
-print("ULP.gpio_init(2, 1)")
 print("ULP.gpio_init(32, 1)")
 print("ULP.gpio_init(33, 1)")
 print("var c = bytes().fromb64(\""+code_b64+"\")")
