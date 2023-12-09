@@ -23,16 +23,16 @@ class ProjLCDClock
     self.topic = persist.find("clock_message_topic")
     self.mode_12h = persist.find("clock_12h_mode",false)
 
-    gpio.pin_mode(2, gpio.OUTPUT)
-    gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
-    gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
     ULP.wake_period(0,20000) # update
-    ULP.gpio_init(2, 1) # led
     ULP.gpio_init(32, 1) # data
     ULP.gpio_init(33, 1) # clock
     var c = bytes().fromb64("dWxwAAwA9AAAAAAAGAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAEACAcgEAANDlryxySABAgCcFzBkDBdwbAwVYGwAB3BsAAVgbEACAcuGvjHIBAABoMgCAcggAANABAAWCAABLggEAgHIJAABoIgCAcgkAANAAAdwbAAVYG3wQAEAABdwbAAFYGxchAEAABVgbhhAAQAABWBsHAABABgBAcKAAQIAABdwbqAAAgAAB3BuoAACAAAFYG1kQAEAABVgbhhAAQAABWBsQAMByAQAZg1IAgHIIAADQAQAFggAADYIBAIByCQAAaEIAgHIJAADQkAAAgAAB3BsAAVgbAAAAsA==")
     ULP.load(c)
     ULP.run()
+
+    gpio.pin_mode(2, gpio.OUTPUT)
+    gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
+    gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
 
     if self.mode_12h self.set_12h() else self.set_24h() end
     if self.topic
@@ -214,7 +214,4 @@ class ProjLCDClock
 
 end
 
-# return ProjLCDClock
-
-# clk.del()
-clk = ProjLCDClock()
+return ProjLCDClock
