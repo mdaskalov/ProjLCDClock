@@ -23,10 +23,14 @@ class ProjLCDClock
     self.topic = persist.find("clock_message_topic")
     self.mode_12h = persist.find("clock_12h_mode",false)
 
-    ULP.wake_period(0,20000) # update
-    ULP.gpio_init(32, 1) # data
-    ULP.gpio_init(33, 1) # clock
-    var c = bytes().fromb64("dWxwAAwA9AAAAAAAGAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAEACAcgEAANDlryxySABAgCcFzBkDBdwbAwVYGwAB3BsAAVgbEACAcuGvjHIBAABoMgCAcggAANABAAWCAABLggEAgHIJAABoIgCAcgkAANAAAdwbAAVYG3wQAEAABdwbAAFYGxchAEAABVgbhhAAQAABWBsHAABABgBAcKAAQIAABdwbqAAAgAAB3BuoAACAAAFYG1kQAEAABVgbhhAAQAABWBsQAMByAQAZg1IAgHIIAADQAQAFggAADYIBAIByCQAAaEIAgHIJAADQkAAAgAAB3BsAAVgbAAAAsA==")
+    ULP.wake_period(0,20000) # each 20ms
+    ULP.set_mem(1,0) # data_lo
+    ULP.set_mem(2,0) # mask_lo
+    ULP.set_mem(3,0) # data_hi
+    ULP.set_mem(4,0) # mask_hi
+    ULP.gpio_init(32, 1)
+    ULP.gpio_init(33, 1)
+    var c = bytes().fromb64("dWxwAAwA9AAAAAAAFAAAgAAAAAAAAAAAAAAAAAAAAABCAIByCAAA0AEABYIAAGWCAQCAcgkAAGgyAIByCQAA0AAB3BsABVgbfBAAQAAF3BsAAVgbFyEAQAAFWBuGEABAAAFYGysAAEC0AACABgBAcHAAQIAABdwbeAAAgAAB3BsBAABAAAFYG1kQAEAABVgbiBAAQAABWBsQAMByAQAZgyIAgHIIAADQAQAFggAAJYIBAIByCQAAaBIAgHIJAADQBgBAcMQAQIAABdwbzAAAgAAB3BsBAABAAAFYGy4QAEAABVgbiBAAQAABWBsQAMByAQBDgwAB3BsAAVgbAAAAsA==")
     ULP.load(c)
     ULP.run()
 
@@ -69,11 +73,11 @@ class ProjLCDClock
       ml = 0
       dl = 0
     end
-    ULP.set_mem(5,ml) # mask_lo
-    ULP.set_mem(4,dl) # data_lo
-    ULP.set_mem(3,mh) # mask_hi
-    ULP.set_mem(2,dh) # data_hi (start transmittion)
-    # print(f"{self.hour}:{self.min}:{self.sec} {string.hex(data)} -> {string.hex(dh)}:{string.hex(mh)} {string.hex(dl)}:{string.hex(ml)}")
+    ULP.set_mem(1,dl) # data_lo
+    ULP.set_mem(2,ml) # mask_lo
+    ULP.set_mem(3,dh) # data_hi
+    ULP.set_mem(4,mh) # mask_hi (start)
+    # print(f"{string.hex(data)} -> {string.hex(dh)}:{string.hex(mh)} {string.hex(dl)}:{string.hex(ml)}")
   end
 
   def send_cmd(cmd, data)
