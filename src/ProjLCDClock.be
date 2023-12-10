@@ -7,17 +7,14 @@ import persist
 
 class ProjLCDClock
 
-  var hour,min,sec,temp,tempFarenheit
+  var secs,temp,tempFarenheit
   var mode_12h
   var topic
   var message
   var showTemp
-  var alert
 
   def init()
-    self.hour = 0
-    self.min = 0
-    self.sec = 0
+    self.secs = 0
     self.temp = 11
     self.tempFarenheit = false
     self.topic = persist.find("clock_message_topic")
@@ -34,7 +31,7 @@ class ProjLCDClock
     ULP.load(c)
     ULP.run()
 
-    gpio.pin_mode(2, gpio.OUTPUT)
+    gpio.pin_mode(2, gpio.OUTPUT) # used for alerts
     gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
 
@@ -154,37 +151,30 @@ class ProjLCDClock
       self.set_temp(self.temp, self.tempFarenheit)
       tasmota.set_timer(100, /-> self.toggle_temp())
       self.showTemp = 6 # show for 6 seconds
-    elif string.find(msg, "ALERT ") == 0
-      var arg = string.split(msg, 6)[1]
-      self.alert = (arg == "true" || arg == "TRUE")
     end
   end
 
   def every_second()
-    var rtc = tasmota.rtc()["local"]
-    var now = tasmota.time_dump(rtc)
-    if now["year"] != 1970
-      self.hour = now["hour"]
-      self.min = now["min"]
-      self.sec = now["sec"]
-      if self.showTemp
-        self.showTemp -= 1
-        if self.showTemp == 0
-          self.toggle_temp()
-          self.showTemp = nil
-        end
-      elif self.message
-        self.show(self.message)
-        self.message = nil
-      elif self.sec == 0
-        self.set_time(self.hour,self.min,self.sec)
+    if self.showTemp
+      self.showTemp -= 1
+      if self.showTemp == 0
+        self.toggle_temp()
+        self.showTemp = nil
       end
-      if self.alert
-        gpio.digital_write(2, self.sec % 2 ? gpio.HIGH : gpio.LOW)
-      else
-        gpio.digital_write(2, gpio.LOW)
+    elif self.message
+      self.show(self.message)
+      self.message = nil
+    else
+      if self.secs >= 60
+        var rtc = tasmota.rtc()["local"]
+        var now = tasmota.time_dump(rtc)
+        self.secs = now["sec"]
+        if now["year"] != 1970
+          self.set_time(now["hour"],now["min"],self.secs)
+        end
       end
     end
+    self.secs += 1
   end
 
   def web_add_main_button()
@@ -211,9 +201,6 @@ class ProjLCDClock
         self.set_time(now["hour"],now["min"],now["sec"])
       end
     end
-    webserver.content_send(string.format("{s}Alert{m}%s{e}",self.alert ? "true":"false"))
-    webserver.content_send(string.format("{s}Temp{m}%0.1f°%s{e}",self.temp,self.tempFarenheit ? "F" : "C"))
-    webserver.content_send(string.format("{s}12h mode{m}%s{e}",self.mode_12h ? "On":"Off"))
   end
 
 end
