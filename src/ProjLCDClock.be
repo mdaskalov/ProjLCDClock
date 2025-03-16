@@ -36,6 +36,9 @@ class ProjLCDClock
     gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
 
     if self.mode_12h self.set_12h() else self.set_24h() end
+    if persist.find("clock_flipped",false)
+      tasmota.set_timer(2000, def () self.flip() end)
+    end
     if self.topic
       mqtt.subscribe(self.topic, def(topic, idx, msg) self.message = msg end)
     end
