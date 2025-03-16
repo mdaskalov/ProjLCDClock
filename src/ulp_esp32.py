@@ -124,7 +124,7 @@ stop:
 binary = src_to_binary(source, cpu="esp32")
 
 # Export section for Berry
-code_b64 = ubinascii.b2a_base64(binary).decode('utf-8')[:-1]
+code_b64 = ubinascii.b2a_base64(binary).decode("utf-8")[:-1]
 
 print("# You can paste the following snippet into Tasmotas Berry console:")
 print("import ULP")
@@ -135,8 +135,8 @@ print("ULP.set_mem(3,0) # data_hi")
 print("ULP.set_mem(4,0) # mask_hi")
 print("ULP.gpio_init(32, 1)")
 print("ULP.gpio_init(33, 1)")
-print("var c = bytes().fromb64(\""+code_b64+"\")")
-print("ULP.load(c)")
+print('var c = "' + code_b64 + '"')
+print("ULP.load(bytes().fromb64(c))")
 print("ULP.run()")
 print("# transmit 12:34 (A: 1,2,3,4,0,0) 584C2005 -> 584C:8000 2005:8000")
 print("ULP.set_mem(1,0x2005) # data_lo")
