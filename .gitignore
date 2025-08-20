@@ -1,1 +1,4 @@
 ProjLCDClock.tapp
+ulp_riscv/sdkconfig
+ulp_riscv/build
+ulp_riscv/sdkconfig.old

@@ -6,10 +6,12 @@ import webserver
 import persist
 
 class ProjLCDClock
+  static BITS_ADDR = 135 # address of "bits" global variable in ulp_main.c
+  static DATA_ADDR = 136 # address of "data" global variable in ulp_main.c
 
   var secs,temp,tempFarenheit
-  var mode_12h
   var topic
+  var mode_12h
   var message
   var showTemp
 
@@ -21,19 +23,15 @@ class ProjLCDClock
     self.mode_12h = persist.find("clock_12h_mode",false)
 
     ULP.wake_period(0,20000) # each 20ms
-    ULP.set_mem(1,0) # data_lo
-    ULP.set_mem(2,0) # mask_lo
-    ULP.set_mem(3,0) # data_hi
-    ULP.set_mem(4,0) # mask_hi
-    ULP.gpio_init(32, 1)
-    ULP.gpio_init(33, 1)
-    var c = bytes().fromb64("dWxwAAwA9AAAAAAAFAAAgAAAAAAAAAAAAAAAAAAAAABCAIByCAAA0AEABYIAAGWCAQCAcgkAAGgyAIByCQAA0AAB3BsABVgbfBAAQAAF3BsAAVgbFyEAQAAFWBuGEABAAAFYGysAAEC0AACABgBAcHAAQIAABdwbeAAAgAAB3BsBAABAAAFYG1kQAEAABVgbiBAAQAABWBsQAMByAQAZgyIAgHIIAADQAQAFggAAJYIBAIByCQAAaBIAgHIJAADQBgBAcMQAQIAABdwbzAAAgAAB3BsBAABAAAFYGy4QAEAABVgbiBAAQAABWBsQAMByAQBDgwAB3BsAAVgbAAAAsA==")
+    ULP.set_mem(self.BITS_ADDR,0) # bits
+    ULP.set_mem(self.DATA_ADDR,0) # data
+    ULP.gpio_init(1, 1)
+    ULP.gpio_init(2, 1)
+    var c = bytes().fromb64("bwBAABcRAAATAcH/4SoNKOUiAaDzJwDAMRU+lfMnAMDj7qf+goApZxMHR0AUQ5MHAECzl6cAk/b2P9WPHMOCgAERtWYmykrITsZSxAbOIsxWwpOGBpDcQjcOAIA3AwgAs+fHAdzCqWeTh4dImEO3Bfr//RUzZ2cAmMOYQ4loBWltj5jDmEMTCgmANwgACDNnFwGYwylnEwcHQRBDE3b2PzNmRgEQwylmEwbGQghCE2VFAAjCkEMzZgYBkMOIQzcGAPB9FnGNiMPcQrPnxwHcwqlnk4fHSJRDs+ZmAJTDlEPtjpTDlEOz5hYBlMMUQ5P29j+z5iYBFMMpZxMHB0MUQ5PmRgAUw5hDM2cHAZjDmENxj5jDgyTAIb3MKWQTBIRAgyoAIhxACUWT9/c/s+dHARzA1T0JZRMF1QrpPQVF5TUcQBFlEwV1H5P39z+z5ycBHMDJNQlFwT0JZRMFpQ5dPRxA/RST9/c/s+cnARzAY94EAqlnk4eHQJhDhWYThgaAE3f3P1GPmMOYQxN39z9Vj5jDIy4AIPJAYkTSREJJskkiSpJKAUUFYYKAs9eaAIWLncMFRY09HEAJZRMF9QaT9/c/s+cnARzAsTUJRak9CWUTBRUOabccQJP39z+z50cBHMDRv6Fnk4dHEJhDtwbA/f0WdY+Yw4KAoWeTh0cQmEO3RsD//RZ1j7fGDwBVj5jDmEO3BkACVY+YwwGg")
     ULP.load(c)
     ULP.run()
 
     gpio.pin_mode(2, gpio.OUTPUT) # used for alerts
-    gpio.pin_mode(25, gpio.DAC)   # output 1.2v on GPIO25
-    gpio.dac_voltage(25, 1502)    # set voltage to 1502mV
 
     if self.mode_12h self.set_12h() else self.set_24h() end
     if persist.find("clock_flipped",false)
@@ -61,23 +59,9 @@ class ProjLCDClock
   end
 
   def send(data, bits)
-    var dh = data >> 16 & 0xFFFF
-    var dl = data & 0xFFFF
-    var mh,ml
-    if bits > 16 # >2 bytes
-      mh = 1 << (bits - 17)
-      ml = 0x8000
-    else
-      mh = 1 << (bits - 1)
-      dh = dl
-      ml = 0
-      dl = 0
-    end
-    ULP.set_mem(1,dl) # data_lo
-    ULP.set_mem(2,ml) # mask_lo
-    ULP.set_mem(3,dh) # data_hi
-    ULP.set_mem(4,mh) # mask_hi (start)
-    # print(f"{string.hex(data)} -> {string.hex(dh)}:{string.hex(mh)} {string.hex(dl)}:{string.hex(ml)}")
+    ULP.set_mem(self.DATA_ADDR, data)
+    ULP.set_mem(self.BITS_ADDR, bits)
+    # print(f"{string.hex(data)} ({bits})")
   end
 
   def send_cmd(cmd, data)
@@ -147,13 +131,18 @@ class ProjLCDClock
       self.flip()
     elif msg == "TOGGLE TEMP"
       self.toggle_temp()
-    elif string.find(msg, "TEMP ") == 0
+    elif string.find(msg, "TEMP ") == 0 # TEMP ###.#C TEMP ###.#F
       var temp = string.split(msg, 5)[1]
       self.tempFarenheit = (string.find(temp, "F") > 0)
       self.temp = number(string.replace(temp, self.tempFarenheit ? "F" : "C", ""))
       self.set_temp(self.temp, self.tempFarenheit)
       tasmota.set_timer(100, /-> self.toggle_temp())
       self.showTemp = 6 # show for 6 seconds
+    elif string.find(msg, "TIME ") == 0 # TIME HHMM
+      var time = number(string.split(msg, 5)[1])
+      var hh = time / 100 % 100
+      var mm = time  % 100
+      self.set_time(hh, mm, 0)
     end
   end
 
