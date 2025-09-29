@@ -6,8 +6,8 @@ import webserver
 import persist
 
 class ProjLCDClock
-  static BITS_ADDR = 135 # address of "bits" global variable in ulp_main.c
-  static DATA_ADDR = 136 # address of "data" global variable in ulp_main.c
+  static BITS_ADDR = 140 # address of "bits" global variable in ulp_main.c
+  static DATA_ADDR = 141 # address of "data" global variable in ulp_main.c
 
   var secs,temp,tempFarenheit
   var topic
@@ -27,7 +27,7 @@ class ProjLCDClock
     ULP.set_mem(self.DATA_ADDR,0) # data
     ULP.gpio_init(1, 1)
     ULP.gpio_init(2, 1)
-    var c = bytes().fromb64("bwBAABcRAAATAcH/4SoNKOUiAaDzJwDAMRU+lfMnAMDj7qf+goApZxMHR0AUQ5MHAECzl6cAk/b2P9WPHMOCgAERtWYmykrITsZSxAbOIsxWwpOGBpDcQjcOAIA3AwgAs+fHAdzCqWeTh4dImEO3Bfr//RUzZ2cAmMOYQ4loBWltj5jDmEMTCgmANwgACDNnFwGYwylnEwcHQRBDE3b2PzNmRgEQwylmEwbGQghCE2VFAAjCkEMzZgYBkMOIQzcGAPB9FnGNiMPcQrPnxwHcwqlnk4fHSJRDs+ZmAJTDlEPtjpTDlEOz5hYBlMMUQ5P29j+z5iYBFMMpZxMHB0MUQ5PmRgAUw5hDM2cHAZjDmENxj5jDgyTAIb3MKWQTBIRAgyoAIhxACUWT9/c/s+dHARzA1T0JZRMF1QrpPQVF5TUcQBFlEwV1H5P39z+z5ycBHMDJNQlFwT0JZRMFpQ5dPRxA/RST9/c/s+cnARzAY94EAqlnk4eHQJhDhWYThgaAE3f3P1GPmMOYQxN39z9Vj5jDIy4AIPJAYkTSREJJskkiSpJKAUUFYYKAs9eaAIWLncMFRY09HEAJZRMF9QaT9/c/s+cnARzAsTUJRak9CWUTBRUOabccQJP39z+z50cBHMDRv6Fnk4dHEJhDtwbA/f0WdY+Yw4KAoWeTh0cQmEO3RsD//RZ1j7fGDwBVj5jDmEO3BkACVY+YwwGg")
+    var c = bytes().fromb64("bwBAABcRAAATAcH/7SINKO0qAaDzJwDAMRU+lfMnAMDj7qf+goApZxMHR0AUQ5MHAECzl6cAk/b2P9WPHMOCgAERTsaDJ0AjBs4izCbKSshSxFbCWsBjiAcUtWaThgaQ3EI3DgCANwMIALPnxwHcwqlnk4eHSJhDtwX6//0VM2dnAJjDmEOJaAVpbY+Yw5hDkwoJgDNnFwGYwylnEwcHQRBDE3b2PzNmVgEQwylmEwbGQghCE2VFAAjCkEM3BQAISY6QwwOoBwA3BgDwfRYzeMgAI6AHAdxCs+fHAdzCqWeTh8dIlEOz5mYAlMOUQ+2OlMOUQ7PmFgGUwxRDk/b2P7PmJgEUwylnEwcHQxRDk+ZGABTDmENJj5jDmENxj5jDgyQAI73MKWQTBIRAHEADK0AjCUWT9/c/s+dXARzA5TUJZRMFtSD5NQVF8T0cQBFlEwVlTZP39z+z5ycBHMBdPQlF0TUJZRMF9SNtNRxA/RST9/c/s+cnARzAY9EEBKlnk4eHQJhDhWYThgaAE3f3P1GPmMOYQxN39z9Vj5jDIygAIiMqACLyQGJE0kRCSbJJIkqSSgJLAUUFYYKAs1ebAIWLncMFRYU1HEAJZRMFVRyT9/c/s+cnARzALT0JRaE1CWUTBRUlUbccQJP39z+z51cBHMDRv6Fnk4dHEJhDtwbA/f0WdY+Yw4KAoWeTh0cQmEO3RsD//RZ1j7fGDwBVj5jDmEO3BkACVY+YwwGg")
     ULP.load(c)
     ULP.run()
 
@@ -59,8 +59,12 @@ class ProjLCDClock
   end
 
   def send(data, bits)
-    ULP.set_mem(self.DATA_ADDR, data)
+    var cur = ULP.get_mem(self.DATA_ADDR)
+    if cur != 0
+      tasmota.delay(50) # wait to complete (data == 0)
+    end
     ULP.set_mem(self.BITS_ADDR, bits)
+    ULP.set_mem(self.DATA_ADDR, data)
     # print(f"{string.hex(data)} ({bits})")
   end
 
