@@ -24,8 +24,8 @@
 #define DATA_GPIO GPIO_NUM_1
 #define CLOCK_GPIO GPIO_NUM_2
 
-int32_t data = 0; // also RTC_SLOW_MEM[135]
-int32_t bits = 0; // also RTC_SLOW_MEM[136]
+int32_t data = 0; // also RTC_SLOW_MEM[140]
+int32_t bits = 0; // also RTC_SLOW_MEM[141]
 
 static void write_dword(uint32_t data, uint32_t bits)
 {
@@ -55,6 +55,9 @@ static void write_dword(uint32_t data, uint32_t bits)
 
 int main(void)
 {
+    if (data == 0)
+        return 0;
+
     /* Setup data GPIO */
     ulp_riscv_gpio_init(DATA_GPIO);
     ulp_riscv_gpio_input_enable(DATA_GPIO);
@@ -76,8 +79,10 @@ int main(void)
         bits = 0;
     }
 
-    // ULP.set_mem(136,0x5012E00C)
-    // ULP.set_mem(135,32)
+    data = 0;
+
+    // ULP.set_mem(140,0x5012E00C)
+    // ULP.set_mem(141,32)
 
     return 0;
 }
